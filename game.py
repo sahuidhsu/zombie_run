@@ -5,6 +5,32 @@ import random, os
 width = 1280
 height = 720
 
+def placeZombie():
+    global zombie, zombieSpeed
+    zombie.append(canvas.create_rectangle(0, 0, characterSize, characterSize, fill="red"))
+    zombieX = random.randint(0, width - characterSize)
+    zombieY = random.randint(0, height - characterSize)
+    canvas.move(zombie[len(zombie)-1], zombieX, zombieY)
+    zombieSpeed = 300
+    moveZombie()
+
+def moveZombie():
+    global zombie, character, pause, zombieSpeed, atMenu
+    if not pause:
+        for thisZombie in zombie:
+            try:
+                if canvas.coords(thisZombie)[0] < canvas.coords(character)[0]:
+                    x = 10
+                else:
+                    x = -10
+                if canvas.coords(thisZombie)[1] < canvas.coords(character)[1]:
+                    y = 10
+                else:
+                    y = -10
+                canvas.move(thisZombie, x, y)
+            except IndexError:
+                a = 0
+    window.after(zombieSpeed, moveZombie)
 
 def createButtons():
     global menuResume, menuStart, menuQuit, menuDelete
@@ -42,7 +68,7 @@ def moveCharacter():
 
 
 def resumeGame():
-    global character, score, scoreText, pause, txt
+    global character, score, scoreText, pause, txt, atMenu
     if checkSaveFile():
         clearButtons()
         score = 0
@@ -56,54 +82,84 @@ def resumeGame():
             pointer += 1
         endPointer = pointer-1
         score = int(readLine[0:endPointer])
+        char = 's'
+        startPointer = pointer
+        while char != '/':
+            char = readLine[pointer]
+            pointer += 1
+        endPointer = pointer-1
+        result = readLine[startPointer:endPointer]
+        numOfZombie = int(result)
         txt = "Score:" + str(score)
         scoreText = canvas.create_text(width / 2, 20, fill="white", font="Times 20 italic bold", text=txt)
         character = canvas.create_rectangle(characterSize, characterSize, characterSize * 2, characterSize * 2,
                                             fill="blue")
         pause = False
+        atMenu = False
+        for i in range(numOfZombie):
+            placeZombie()
         scoreIncrease()
         moveCharacter()
     else:
         messagebox.showerror(title="Save File Not Found", message="Save file not exist! Please start a new game!")
 
 def leftKey(event):
-    global direction, pause
+    global direction, pause, pauseText
     direction = "left"
     pause = False
+    try:
+        canvas.delete(pauseText)
+    except NameError:
+        a = 0
     moveCharacter()
 
 def rightKey(event):
-    global direction, pause
+    global direction, pause, pauseText
     direction = "right"
     pause = False
+    try:
+        canvas.delete(pauseText)
+    except NameError:
+        a = 0
     moveCharacter()
 
 def upKey(event):
-    global direction, pause
+    global direction, pause, pauseText
     direction = "up"
     pause = False
+    try:
+        canvas.delete(pauseText)
+    except NameError:
+        a = 0
     moveCharacter()
 
 def downKey(event):
-    global direction, pause
+    global direction, pause, pauseText
     direction = "down"
     pause = False
+    try:
+        canvas.delete(pauseText)
+    except NameError:
+        a = 0
     moveCharacter()
 
 def pauseKey(event):
-    global direction, pause
+    global direction, pause, pauseText
     direction = "pause"
     pause = True
+    pauseText = canvas.create_text(width/2, height/2, fill="white", font="Times 50 bold", text="PAUSE")
 
 def save(event):
     global score
     saveFile = open("save.dat", 'w')
     saveFile.write(str(score))
     saveFile.write('/')
+    saveFile.write(str(len(zombie)))
+    saveFile.write('/')
     saveFile.close()
 
 def startNewGame():
-    global character, score, scoreText, pause, txt
+    global character, score, scoreText, pause, txt, atMenu
     result = True
     if checkSaveFile():
         a = messagebox.askquestion(title="Save File Exist", message="There is a save file exist! If you continue to"
@@ -113,6 +169,7 @@ def startNewGame():
         elif a == "no":
             result = False
     if result:
+        atMenu = False
         clearButtons()
         saveFile = open("save.dat", 'w')
         saveFile.close()
@@ -122,6 +179,7 @@ def startNewGame():
         character = canvas.create_rectangle(characterSize, characterSize, characterSize * 2, characterSize * 2,
                                             fill="blue")
         pause = False
+        placeZombie()
         scoreIncrease()
         moveCharacter()
 
@@ -144,19 +202,24 @@ def checkSaveFile():
     return False
 
 def scoreIncrease():
-    global score, pause, scoreText
+    global score, pause, scoreText, zombieSpeed
     if not pause:
         score += 10
+        if (zombieSpeed > 200) and (score % 50 == 0) and (score != 0):
+            zombieSpeed -= 25
+        if score % 100 == 0:
+            placeZombie()
     txt = "Score:" + str(score)
     canvas.itemconfigure(scoreText, text=txt)
-    window.after(5000, scoreIncrease)
+    window.after(1000, scoreIncrease)
 
 def quitGame():
     window.destroy()
 
 def backToMenu(event):
-    global character, scoreText
+    global character, scoreText, atMenu
     save(event)
+    atMenu = True
     canvas.delete('all')
     canvas.configure(bg='#66CCFF')
     createButtons()
@@ -189,19 +252,21 @@ def bossKey(event):  # Press Control+b to use boss key, click the image to go ba
     BKI.place(x=0, y=0)
 
 
+atMenu = True
 window = setWindowDimensions(width, height)
 canvas = Canvas(window, bg="#66CCFF", width=width, height=height)
 window.title("Game Test")
 bossKeyImage = PhotoImage(file="bossKeyImage.png")
 createButtons()
 characterSize = 15
+zombie = []
 direction = "down"
 canvas.bind("<Control-b>", bossKey)
 canvas.bind("<Left>", leftKey)
 canvas.bind("<Right>", rightKey)
 canvas.bind("<Up>", upKey)
 canvas.bind("<Down>", downKey)
-canvas.bind('<Key-p>', pauseKey)
+canvas.bind('<Key-p>', pauseKey)    # press p to pause, press any direction key to continue
 canvas.bind('<Control-s>', save)    # press control+s to save
 canvas.bind('<Control-t>', backToMenu)  # press control+t to back to menu
 canvas.focus_set()
