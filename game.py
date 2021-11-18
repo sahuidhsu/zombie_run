@@ -42,14 +42,26 @@ def moveCharacter():
 
 
 def resumeGame():
-    global character
+    global character, score, scoreText, pause, txt
     if checkSaveFile():
         clearButtons()
         score = 0
+        saveFile = open('save.dat', 'r')
+        readLine = saveFile.read()
+        saveFile.close()
+        pointer = 0
+        char = 's'
+        while char != '/':
+            char = readLine[pointer]
+            pointer += 1
+        endPointer = pointer-1
+        score = int(readLine[0:endPointer])
         txt = "Score:" + str(score)
         scoreText = canvas.create_text(width / 2, 20, fill="white", font="Times 20 italic bold", text=txt)
         character = canvas.create_rectangle(characterSize, characterSize, characterSize * 2, characterSize * 2,
                                             fill="blue")
+        pause = False
+        scoreIncrease()
         moveCharacter()
     else:
         messagebox.showerror(title="Save File Not Found", message="Save file not exist! Please start a new game!")
@@ -83,8 +95,15 @@ def pauseKey(event):
     direction = "pause"
     pause = True
 
+def save(event):
+    global score
+    saveFile = open("save.dat", 'w')
+    saveFile.write(str(score))
+    saveFile.write('/')
+    saveFile.close()
+
 def startNewGame():
-    global character
+    global character, score, scoreText, pause, txt
     result = True
     if checkSaveFile():
         a = messagebox.askquestion(title="Save File Exist", message="There is a save file exist! If you continue to"
@@ -102,8 +121,9 @@ def startNewGame():
         scoreText = canvas.create_text(width / 2, 20, fill="white", font="Times 20 italic bold", text=txt)
         character = canvas.create_rectangle(characterSize, characterSize, characterSize * 2, characterSize * 2,
                                             fill="blue")
+        pause = False
+        scoreIncrease()
         moveCharacter()
-
 
 def deleteSave():
     if checkSaveFile():
@@ -116,7 +136,6 @@ def deleteSave():
     else:
         messagebox.showerror(title="Error", message="Save file not found!")
 
-
 def checkSaveFile():
     dir = os.listdir()
     for file in dir:
@@ -124,16 +143,31 @@ def checkSaveFile():
             return True
     return False
 
+def scoreIncrease():
+    global score, pause, scoreText
+    if not pause:
+        score += 10
+    txt = "Score:" + str(score)
+    canvas.itemconfigure(scoreText, text=txt)
+    window.after(5000, scoreIncrease)
 
 def quitGame():
     window.destroy()
 
+def backToMenu(event):
+    global character, scoreText
+    save(event)
+    canvas.delete('all')
+    canvas.configure(bg='#66CCFF')
+    createButtons()
 
 def clearButtons():
+    global menuQuit, menuStart, menuDelete, menuResume
     canvas.configure(bg="black")
-    for thisButton in buttonList:
-        thisButton.destroy()
-
+    menuQuit.destroy()
+    menuStart.destroy()
+    menuDelete.destroy()
+    menuResume.destroy()
 
 def setWindowDimensions(w, h):
     window = Tk()
@@ -143,7 +177,6 @@ def setWindowDimensions(w, h):
     middleY = (hs / 2) - (h / 2)
     window.geometry('%dx%d+%d+%d' % (w, h, middleX, middleY))
     return window
-
 
 def destroyBKI():
     global BKI
@@ -162,7 +195,6 @@ window.title("Game Test")
 bossKeyImage = PhotoImage(file="bossKeyImage.png")
 createButtons()
 characterSize = 15
-buttonList = [menuQuit, menuStart, menuResume, menuDelete]
 direction = "down"
 canvas.bind("<Control-b>", bossKey)
 canvas.bind("<Left>", leftKey)
@@ -170,6 +202,8 @@ canvas.bind("<Right>", rightKey)
 canvas.bind("<Up>", upKey)
 canvas.bind("<Down>", downKey)
 canvas.bind('<Key-p>', pauseKey)
+canvas.bind('<Control-s>', save)    # press control+s to save
+canvas.bind('<Control-t>', backToMenu)  # press control+t to back to menu
 canvas.focus_set()
 canvas.pack()
 window.mainloop()
