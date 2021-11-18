@@ -62,11 +62,9 @@ def quitGame():
 
 def clearButtons():
     global menuResume, menuStart, menuQuit, menuDelete
-    canvas.destroy()
-    menuResume.destroy()
-    menuStart.destroy()
-    menuQuit.destroy()
-    menuDelete.destroy()
+    canvas.configure(bg="black")
+    for thisButton in buttonList:
+        thisButton.destroy()
 
 def setWindowDimensions(w, h):
     global middleX, middleY
@@ -78,10 +76,22 @@ def setWindowDimensions(w, h):
     window.geometry('%dx%d+%d+%d' % (w, h, middleX, middleY))
     return window
 
+def destroyBKI():
+    global BKI
+    BKI.destroy()
+
+def bossKey(event):     #Press Control+b to use boss key, click the image to go back
+    global bossKeyImage, BKI
+    BKI = Button(window, image=bossKeyImage, width="1280", height="720", command=destroyBKI)
+    BKI.place(x=0, y=0)
 
 window = setWindowDimensions(width, height)
 canvas = Canvas(window, bg="#66CCFF", width=width, height=height)
 window.title("Game Test")
+bossKeyImage = PhotoImage(file="bossKeyImage.png")
 createButtons()
+buttonList = [menuQuit, menuStart, menuResume, menuDelete]
+canvas.bind("<Control-b>", bossKey)
+canvas.focus_set()
 canvas.pack()
 window.mainloop()
