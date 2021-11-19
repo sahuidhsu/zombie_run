@@ -337,12 +337,14 @@ def setWindowDimensions(w, h):
 
 
 def destroyBKI():
-    global BKI
+    global BKI, pause
+    pause = False
     BKI.destroy()
 
 
 def bossKey(event):  # Press Control+b to use boss key, click the image to go back
-    global bossKeyImage, BKI
+    global bossKeyImage, BKI, pause
+    pause = True
     BKI = Button(window, image=bossKeyImage, width="1280", height="720", command=destroyBKI)
     BKI.place(x=0, y=0)
 
