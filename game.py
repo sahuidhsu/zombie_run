@@ -1,12 +1,13 @@
 # resolution: 1280x720
-from tkinter import Tk, Canvas, PhotoImage, Button, messagebox
-import random, os
+import os
+import random
+from tkinter import Tk, Canvas, PhotoImage, Button, messagebox, Entry
 
 width = 1280
 height = 720
 
 
-def overlapping(a, b):
+def overlapping(a, b):  # detection of overlapping
     if a[0] < b[2] and a[2] > b[0] and a[1] < b[3] and a[3] > b[1]:
         return True
     return False
@@ -53,7 +54,7 @@ def alreadyActivated():
     messagebox.showinfo(message="You are already in cheat mode!")
 
 
-def cheat():    # click the title image to activate cheat mode
+def cheat():  # click the title image to activate cheat mode
     global cheatMode
     messagebox.showinfo(message="ACTIVATING CHEAT MODE!\r\n In cheat mode, you will have infinite lives!"
                                 "\r\n tips: start game and go back to menu to quit cheat mode")
@@ -62,8 +63,8 @@ def cheat():    # click the title image to activate cheat mode
     zombieRun.configure(command=alreadyActivated)
 
 
-def createButtons():
-    global menuResume, menuStart, menuQuit, menuDelete, zombieRun
+def createButtons():  # menu buttons creation
+    global menuResume, menuStart, menuQuit, menuDelete, zombieRun, player
     menuResume = Button(window, text="Resume Game", command=resumeGame, width=15, height=2)
     menuResume.place(x=800, y=200)
     menuStart = Button(window, text="Star New Game", command=startNewGame, width=15, height=2)
@@ -74,6 +75,9 @@ def createButtons():
     menuQuit.place(x=800, y=350)
     zombieRun = Button(window, image=titleImage, command=cheat)
     zombieRun.place(x=200, y=150)
+    player = Entry(window, show=None)
+    player.insert(0, "Player")
+    player.place(x=800, y=150)
 
 
 def moveCharacter():
@@ -99,8 +103,8 @@ def moveCharacter():
         canvas.move(character, 0, characterSize)
 
 
-def resumeGame():
-    global character, score, scoreText, pause, txt, atMenu, liveText, lives
+def resumeGame():  # load save file and resume previous game
+    global character, score, scoreText, pause, txt, atMenu, liveText, lives, playerName, player
     if checkSaveFile():
         score = 0
         saveFile = open('save.dat', 'r')
@@ -127,7 +131,21 @@ def resumeGame():
             pointer += 1
         endPointer = pointer - 1
         lives = int(readLine[startPointer:endPointer])
-        startPointer = pointer + 2
+        startPointer = pointer
+        char = 's'
+        while char != '/':
+            char = readLine[pointer]
+            pointer += 1
+        endPointer = pointer - 1
+        playerName = readLine[startPointer:endPointer]
+        currentName = player.get()
+        if currentName != playerName:
+            a = messagebox.askquestion(title='Player Different', message='The name in save file is different from your '
+                                                                         'currently using name, do you want to use the '
+                                                                         'new player name?')
+            if a == 'yes':
+                playerName = currentName
+        canvas.focus_set()
         if lives >= 1:
             clearButtons()
             numOfZombie = int(result)
@@ -204,7 +222,7 @@ def pauseKey(event):
 
 
 def save(event):
-    global score
+    global score, playerName
     pauseKey(event)
     saveFile = open("save.dat", 'w')
     saveFile.write(str(score))
@@ -213,12 +231,14 @@ def save(event):
     saveFile.write('/')
     saveFile.write(str(lives))
     saveFile.write('/')
+    saveFile.write(playerName)
+    saveFile.write('/')
     saveFile.close()
     messagebox.showinfo(message="Save complete!")
 
 
 def startNewGame():
-    global character, score, scoreText, pause, txt, atMenu, liveText, lives, zombie
+    global character, score, scoreText, pause, txt, atMenu, liveText, lives, zombie, playerName
     result = True
     if checkSaveFile():
         a = messagebox.askquestion(title="Save File Exist", message="There is a save file exist! If you continue to"
@@ -227,7 +247,9 @@ def startNewGame():
             result = True
         elif a == "no":
             result = False
+    canvas.focus_set()
     if result:
+        playerName = player.get()
         atMenu = False
         clearButtons()
         zombie = []
@@ -283,7 +305,7 @@ def quitGame():
 
 
 def backToMenu(event):
-    global atMenu, lives, zombie, score, cheatMode
+    global atMenu, lives, zombie, score, cheatMode, playerName
     atMenu = True
     saveFile = open("save.dat", 'w')
     saveFile.write(str(score))
@@ -291,6 +313,8 @@ def backToMenu(event):
     saveFile.write(str(len(zombie)))
     saveFile.write('/')
     saveFile.write(str(lives))
+    saveFile.write('/')
+    saveFile.write(playerName)
     saveFile.write('/')
     saveFile.close()
     canvas.delete('all')
@@ -300,7 +324,7 @@ def backToMenu(event):
 
 
 def back():
-    global atMenu, lives, zombie, score, cheatMode
+    global atMenu, lives, zombie, score, cheatMode, playerName
     atMenu = True
     saveFile = open("save.dat", 'w')
     saveFile.write(str(score))
@@ -309,6 +333,8 @@ def back():
     saveFile.write('/')
     saveFile.write(str(lives))
     saveFile.write('/')
+    saveFile.write(playerName)
+    saveFile.write('/')
     saveFile.close()
     canvas.delete('all')
     canvas.configure(bg='#66CCFF')
@@ -316,14 +342,15 @@ def back():
     createButtons()
 
 
-def clearButtons():
-    global menuQuit, menuStart, menuDelete, menuResume, zombieRun
+def clearButtons():  # delete all buttons in menu
+    global menuQuit, menuStart, menuDelete, menuResume, zombieRun, player
     canvas.configure(bg="black")
     menuQuit.destroy()
     menuStart.destroy()
     menuDelete.destroy()
     menuResume.destroy()
     zombieRun.destroy()
+    player.destroy()
 
 
 def setWindowDimensions(w, h):
@@ -356,10 +383,12 @@ window.title("Zombie Run")
 bossKeyImage = PhotoImage(file="bossKeyImage.png")
 titleImage = PhotoImage(file="title.png")
 createButtons()
+playerName = 'Player'
 cheatMode = False
 characterSize = 15
 zombie = []
 lives = 5
+
 direction = "down"
 canvas.bind("<Control-b>", bossKey)
 canvas.bind("<Left>", leftKey)
