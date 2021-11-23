@@ -1,7 +1,7 @@
 # resolution: 1280x720
 import os
 import random
-from tkinter import Tk, Canvas, PhotoImage, Button, messagebox, Entry
+from tkinter import Tk, Canvas, PhotoImage, Button, messagebox, Entry, ttk
 
 width = 1280
 height = 720
@@ -24,7 +24,7 @@ def placeZombie():
 
 
 def moveZombie():
-    global zombie, character, pause, zombieSpeed, atMenu, lives, liveText
+    global zombie, character, pause, zombieSpeed, atMenu, lives, liveText, scoreText
     if not pause:
         for thisZombie in zombie:
             try:
@@ -45,6 +45,7 @@ def moveZombie():
                 a = 0
         if lives <= 0:
             pause = True
+            canvas.itemconfigure(scoreText, text="Score: 0")
             messagebox.showwarning(message="Game Over!")
             back()
     window.after(zombieSpeed, moveZombie)
@@ -63,21 +64,58 @@ def cheat():  # click the title image to activate cheat mode
     zombieRun.configure(command=alreadyActivated)
 
 
+def showLeaderBoard():
+    global table
+    if not checkLeaderBoard():
+        messagebox.showerror(title='Error', message="LeaderBoard.dat file not found, please finish the game for "
+                                                    "at least one time to create one")
+    else:
+        leaderBoardFile = open("leaderBoard.dat", 'r')
+        playerList = []
+        temp = 's'
+        while temp != '':
+            temp = leaderBoardFile.readline()
+            playerList.append(temp.strip())
+        leaderBoardFile.close()
+        table = ttk.Treeview(window)
+        table["columns"] = ("playerName", "score")
+        table.column("playerName", width=100)
+        table.column("score", width=100)
+        table.heading("playerName", text="Player Name")
+        table.heading("score", text="Score")
+        pointer = 0
+        while pointer <= len(playerList) and len(playerList[pointer]) >= 1:
+            table.insert("", pointer, values=(playerList[pointer], playerList[pointer+1]))
+            pointer += 2
+        sortColumn()
+        table.place(x=0, y=0, width=1280, height=720)
+
+
+def sortColumn():
+    global table
+    l = [(table.set(i, "score"), i) for i in table.get_children('')]
+    l.sort(reverse=True)
+    for index, (val, i) in enumerate(l):
+        table.move(i, '', index)
+
+
 def createButtons():  # menu buttons creation
-    global menuResume, menuStart, menuQuit, menuDelete, zombieRun, player
+    global menuResume, menuStart, menuQuit, menuLeaderBoard, menuDelete, zombieRun, player
     menuResume = Button(window, text="Resume Game", command=resumeGame, width=15, height=2)
     menuResume.place(x=800, y=200)
     menuStart = Button(window, text="Star New Game", command=startNewGame, width=15, height=2)
     menuStart.place(x=800, y=250)
     menuDelete = Button(window, text="Delete Save File", command=deleteSave, width=15, height=2)
     menuDelete.place(x=800, y=300)
+    menuLeaderBoard = Button(window, text="Leader Board", command=showLeaderBoard, width=15, height=2)
+    menuLeaderBoard.place(x=800, y=350)
     menuQuit = Button(window, text="Quit Game", command=quitGame, width=15, height=2)
-    menuQuit.place(x=800, y=350)
+    menuQuit.place(x=800, y=400)
     zombieRun = Button(window, image=titleImage, command=cheat)
     zombieRun.place(x=200, y=150)
-    player = Entry(window, show=None)
+    player = Entry(window, show=None, width=17)
     player.insert(0, "Player")
-    player.place(x=800, y=150)
+    player.place(x=800, y=165)
 
 
 def moveCharacter():
@@ -287,6 +325,14 @@ def checkSaveFile():
     return False
 
 
+def checkLeaderBoard():
+    dir = os.listdir()
+    for file in dir:
+        if file == "leaderBoard.dat":
+            return True
+    return False
+
+
 def scoreIncrease():
     global score, pause, scoreText, zombieSpeed
     if (not pause) and not atMenu:
@@ -302,6 +348,52 @@ def scoreIncrease():
 
 def quitGame():
     window.destroy()
+
+
+def saveLeaderBoard():
+    global score
+    if checkLeaderBoard():
+        leaderBoardFile = open("leaderBoard.dat", 'r')
+        playerList = []
+        temp = 's'
+        while temp != '':
+            temp = leaderBoardFile.readline()
+            playerList.append(temp.rstrip())
+        leaderBoardFile.close()
+        found = False
+        pointer = 0
+        while (not found) and (pointer < len(playerList)):
+            if playerName == playerList[pointer]:
+                found = True
+            else:
+                pointer += 1
+        if not found:
+            leaderBoardFile = open("leaderBoard.dat", 'a')
+            leaderBoardFile.write(playerName)
+            leaderBoardFile.write('\r\n')
+            leaderBoardFile.write(str(score))
+            leaderBoardFile.write("\r\n")
+            leaderBoardFile.close()
+        else:
+            if int(playerList[pointer+1]) < score:
+                messagebox.showinfo(title="Congratulations!", message="You broke your record! Saving to leader board!")
+                playerList[pointer+1] = score
+                leaderBoardFile = open("leaderBoard.dat", 'w')
+                for i in range(len(playerList)):
+                    leaderBoardFile.write(str(playerList[i]))
+                    leaderBoardFile.write('\r\n')
+                leaderBoardFile.close()
+            else:
+                messagebox.showinfo(title="Sorry!", message="You have not broke your record, "
+                                                            "not saving to leader board!")
+    else:
+        leaderBoardFile = open("leaderBoard.dat", 'w')
+        leaderBoardFile.write(playerName)
+        leaderBoardFile.write('\r\n')
+        leaderBoardFile.write(str(score))
+        leaderBoardFile.write("\r\n")
+        leaderBoardFile.close()
+        messagebox.showinfo(title="Saved", message="Your record is saved to leader board!")
 
 
 def backToMenu(event):
@@ -336,6 +428,7 @@ def back():
     saveFile.write(playerName)
     saveFile.write('/')
     saveFile.close()
+    saveLeaderBoard()
     canvas.delete('all')
     canvas.configure(bg='#66CCFF')
     cheatMode = False
@@ -343,12 +436,13 @@ def back():
 
 
 def clearButtons():  # delete all buttons in menu
-    global menuQuit, menuStart, menuDelete, menuResume, zombieRun, player
+    global menuQuit, menuStart, menuDelete, menuResume, zombieRun, menuLeaderBoard, player
     canvas.configure(bg="black")
     menuQuit.destroy()
     menuStart.destroy()
     menuDelete.destroy()
     menuResume.destroy()
+    menuLeaderBoard.destroy()
     zombieRun.destroy()
     player.destroy()
 
