@@ -45,6 +45,7 @@ def moveZombie():
                 a = 0
         if lives <= 0:
             pause = True
+            canvas.itemconfigure(liveText, text="Lives:0")
             messagebox.showwarning(message="You have no lives left! Game Over!")
             back()
     window.after(zombieSpeed, moveZombie)
@@ -100,7 +101,7 @@ def clearLeaderBoard():
 def sortColumn():
     global table
     values = [(table.set(i, "score"), i) for i in table.get_children("")]
-    values.sort(key=lambda t: int(t[0]), reverse=True)
+    values.sort(key=lambda score: int(score[0]), reverse=True)
     for index, (val, i) in enumerate(values):
         table.move(i, '', index)
 
@@ -490,8 +491,8 @@ zombie = []
 lives = 5
 
 direction = "down"
-canvas.bind("<Control-b>", bossKey)
-canvas.bind("<Left>", leftKey)
+canvas.bind("<Control-b>", bossKey) # Control+b: Boss Key
+canvas.bind("<Left>", leftKey)  # cursor key to control character
 canvas.bind("<Right>", rightKey)
 canvas.bind("<Up>", upKey)
 canvas.bind("<Down>", downKey)
