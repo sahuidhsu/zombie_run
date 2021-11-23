@@ -24,7 +24,7 @@ def placeZombie():
 
 
 def moveZombie():
-    global zombie, character, pause, zombieSpeed, atMenu, lives, liveText, scoreText
+    global zombie, character, pause, zombieSpeed, atMenu, lives, liveText
     if not pause:
         for thisZombie in zombie:
             try:
@@ -45,8 +45,7 @@ def moveZombie():
                 a = 0
         if lives <= 0:
             pause = True
-            canvas.itemconfigure(scoreText, text="Score: 0")
-            messagebox.showwarning(message="Game Over!")
+            messagebox.showwarning(message="You have no lives left! Game Over!")
             back()
     window.after(zombieSpeed, moveZombie)
 
@@ -65,7 +64,7 @@ def cheat():  # click the title image to activate cheat mode
 
 
 def showLeaderBoard():
-    global table
+    global table, exitButton
     if not checkLeaderBoard():
         messagebox.showerror(title='Error', message="LeaderBoard.dat file not found, please finish the game for "
                                                     "at least one time to create one")
@@ -89,13 +88,20 @@ def showLeaderBoard():
             pointer += 2
         sortColumn()
         table.place(x=0, y=0, width=1280, height=720)
+        exitButton = Button(window, text="Exit Leader Board", command=clearLeaderBoard, width=40, height=5)
+        exitButton.place(x=10, y=100)
+
+
+def clearLeaderBoard():
+    exitButton.destroy()
+    table.destroy()
 
 
 def sortColumn():
     global table
-    l = [(table.set(i, "score"), i) for i in table.get_children('')]
-    l.sort(reverse=True)
-    for index, (val, i) in enumerate(l):
+    values = [(table.set(i, "score"), i) for i in table.get_children("")]
+    values.sort(key=lambda t: int(t[0]), reverse=True)
+    for index, (val, i) in enumerate(values):
         table.move(i, '', index)
 
 
