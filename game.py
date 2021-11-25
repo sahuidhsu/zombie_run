@@ -85,7 +85,7 @@ def showLeaderBoard():
         table.heading("score", text="Score")
         pointer = 0
         while pointer <= len(playerList) and len(playerList[pointer]) >= 1:
-            table.insert("", pointer, values=(playerList[pointer], playerList[pointer+1]))
+            table.insert("", pointer, values=(playerList[pointer], playerList[pointer + 1]))
             pointer += 2
         sortColumn()
         table.place(x=0, y=0, width=1280, height=720)
@@ -386,9 +386,9 @@ def saveLeaderBoard():
             leaderBoardFile.write("\r\n")
             leaderBoardFile.close()
         else:
-            if int(playerList[pointer+1]) < score:
+            if int(playerList[pointer + 1]) < score:
                 messagebox.showinfo(title="Congratulations!", message="You broke your record! Saving to leader board!")
-                playerList[pointer+1] = score
+                playerList[pointer + 1] = score
                 leaderBoardFile = open("leaderBoard.dat", 'w')
                 for i in range(len(playerList)):
                     leaderBoardFile.write(str(playerList[i]))
@@ -460,7 +460,6 @@ def clearButtons():  # delete all buttons in menu
     chooseColor.destroy()
 
 
-
 def setWindowDimensions(w, h):
     window = Tk()
     ws = window.winfo_screenwidth()
@@ -490,8 +489,9 @@ characterColor = 'blue'
 window = setWindowDimensions(width, height)
 canvas = Canvas(window, bg="#66CCFF", width=width, height=height)
 window.title("Zombie Run")
-bossKeyImage = PhotoImage(file="bossKeyImage.png")
-titleImage = PhotoImage(file="title.png")
+bossKeyImage = PhotoImage(file="bossKeyImage.png")  # this image is a screenshot taken by myself
+titleImage = PhotoImage(file="title.png")  # this image is a combined picture made by myself, zombie image
+# is from https://pixabay.com/vectors/male-man-boy-zombie-undead-1781413
 createButtons()
 playerName = 'Player'
 cheatMode = False
@@ -500,7 +500,7 @@ zombie = []
 lives = 5
 
 direction = "down"
-canvas.bind("<Control-b>", bossKey) # Control+b: Boss Key
+canvas.bind("<Control-b>", bossKey)  # Control+b: Boss Key
 canvas.bind("<Left>", leftKey)  # cursor key to control character
 canvas.bind("<Right>", rightKey)
 canvas.bind("<Up>", upKey)
