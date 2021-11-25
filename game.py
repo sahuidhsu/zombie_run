@@ -107,7 +107,7 @@ def sortColumn():
 
 
 def createButtons():  # menu buttons creation
-    global menuResume, menuStart, menuQuit, menuLeaderBoard, menuDelete, zombieRun, player
+    global menuResume, menuStart, menuQuit, menuLeaderBoard, menuDelete, zombieRun, player, chooseColor
     menuResume = Button(window, text="Resume Game", command=resumeGame, width=15, height=2)
     menuResume.place(x=800, y=200)
     menuStart = Button(window, text="Star New Game", command=startNewGame, width=15, height=2)
@@ -120,6 +120,10 @@ def createButtons():  # menu buttons creation
     menuQuit.place(x=800, y=400)
     zombieRun = Button(window, image=titleImage, command=cheat)
     zombieRun.place(x=200, y=150)
+    chooseColor = ttk.Combobox(window, width=17, height=20)
+    chooseColor['value'] = ("Black", "Green", "Purple", "Dark Blue", "Grey")
+    chooseColor.current(0)
+    chooseColor.place(x=800, y=450)
     player = Entry(window, show=None, width=17)
     player.insert(0, "Player")
     player.place(x=800, y=165)
@@ -149,7 +153,7 @@ def moveCharacter():
 
 
 def resumeGame():  # load save file and resume previous game
-    global character, score, scoreText, pause, txt, atMenu, liveText, lives, playerName, player
+    global character, score, scoreText, pause, txt, atMenu, liveText, lives, playerName, player, characterColor
     if checkSaveFile():
         score = 0
         saveFile = open('save.dat', 'r')
@@ -197,7 +201,7 @@ def resumeGame():  # load save file and resume previous game
             txt = "Score:" + str(score)
             scoreText = canvas.create_text(width / 2, 20, fill="white", font="Times 20 italic bold", text=txt)
             character = canvas.create_rectangle(characterSize, characterSize, characterSize * 2, characterSize * 2,
-                                                fill="blue")
+                                                fill=characterColor)
             liveTxt = "Lives:" + str(lives)
             liveText = canvas.create_text(200, 30, fill="red", font="Times 30 italic bold", text=liveTxt)
             pause = False
@@ -283,7 +287,7 @@ def save(event):
 
 
 def startNewGame():
-    global character, score, scoreText, pause, txt, atMenu, liveText, lives, zombie, playerName
+    global character, score, scoreText, pause, txt, atMenu, liveText, lives, zombie, playerName, characterColor
     result = True
     if checkSaveFile():
         a = messagebox.askquestion(title="Save File Exist", message="There is a save file exist! If you continue to"
@@ -303,7 +307,7 @@ def startNewGame():
         txt = "Score:" + str(score)
         scoreText = canvas.create_text(width / 2, 20, fill="white", font="Times 20 italic bold", text=txt)
         character = canvas.create_rectangle(characterSize, characterSize, characterSize * 2, characterSize * 2,
-                                            fill="blue")
+                                            fill=characterColor)
         liveTxt = "Lives:" + str(lives)
         liveText = canvas.create_text(200, 30, fill="red", font="Times 30 italic bold", text=liveTxt)
         pause = False
@@ -443,8 +447,9 @@ def back():
 
 
 def clearButtons():  # delete all buttons in menu
-    global menuQuit, menuStart, menuDelete, menuResume, zombieRun, menuLeaderBoard, player
-    canvas.configure(bg="black")
+    global menuQuit, menuStart, menuDelete, menuResume, zombieRun, menuLeaderBoard, player, backGroundColor, chooseColor
+    backGroundColor = chooseColor.get()
+    canvas.configure(bg=backGroundColor)
     menuQuit.destroy()
     menuStart.destroy()
     menuDelete.destroy()
@@ -452,6 +457,8 @@ def clearButtons():  # delete all buttons in menu
     menuLeaderBoard.destroy()
     zombieRun.destroy()
     player.destroy()
+    chooseColor.destroy()
+
 
 
 def setWindowDimensions(w, h):
@@ -478,6 +485,8 @@ def bossKey(event):  # Press Control+b to use boss key, click the image to go ba
 
 
 atMenu = True
+backGroundColor = 'black'
+characterColor = 'blue'
 window = setWindowDimensions(width, height)
 canvas = Canvas(window, bg="#66CCFF", width=width, height=height)
 window.title("Zombie Run")
